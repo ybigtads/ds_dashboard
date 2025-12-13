@@ -33,7 +33,9 @@ export async function GET(
         score,
         submitted_at,
         users (
-          username
+          username,
+          email,
+          avatar_url
         )
       `)
       .eq('competition_id', id)
@@ -47,7 +49,9 @@ export async function GET(
     // Group by user and calculate best score
     const userBests = new Map<string, {
       user_id: string;
-      username: string;
+      username: string | null;
+      email: string;
+      avatar_url: string | null;
       best_score: number;
       submission_count: number;
       last_submission: string;
@@ -55,8 +59,10 @@ export async function GET(
 
     for (const sub of submissions || []) {
       const userId = sub.user_id;
-      const users = sub.users as unknown as { username: string } | null;
-      const username = users?.username || 'Unknown';
+      const users = sub.users as unknown as { username: string | null; email: string; avatar_url: string | null } | null;
+      const username = users?.username || null;
+      const email = users?.email || 'Unknown';
+      const avatarUrl = users?.avatar_url || null;
       const score = sub.score as number;
       const submittedAt = sub.submitted_at;
 
@@ -66,6 +72,8 @@ export async function GET(
         userBests.set(userId, {
           user_id: userId,
           username,
+          email,
+          avatar_url: avatarUrl,
           best_score: score,
           submission_count: 1,
           last_submission: submittedAt,

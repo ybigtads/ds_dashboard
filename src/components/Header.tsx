@@ -44,14 +44,23 @@ export function Header() {
               <div className="w-20 h-8 bg-gray-200 animate-pulse rounded" />
             ) : user ? (
               <>
-                <span className="text-sm text-gray-600">
-                  {user.username}
-                  {user.is_admin && (
-                    <span className="ml-1 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                      Admin
-                    </span>
+                <div className="flex items-center space-x-2">
+                  {user.avatar_url && (
+                    <img
+                      src={user.avatar_url}
+                      alt=""
+                      className="w-8 h-8 rounded-full"
+                    />
                   )}
-                </span>
+                  <span className="text-sm text-gray-600">
+                    {user.username || user.email}
+                    {user.is_admin && (
+                      <span className="ml-1 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                        Admin
+                      </span>
+                    )}
+                  </span>
+                </div>
                 <button
                   onClick={handleLogout}
                   className="text-sm text-gray-600 hover:text-gray-900"
@@ -60,20 +69,12 @@ export function Header() {
                 </button>
               </>
             ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/register"
-                  className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                >
-                  Register
-                </Link>
-              </>
+              <Link
+                href="/login"
+                className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Sign In
+              </Link>
             )}
           </div>
         </div>

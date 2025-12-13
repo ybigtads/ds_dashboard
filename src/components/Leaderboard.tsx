@@ -67,9 +67,18 @@ export function Leaderboard({ entries, metric }: LeaderboardProps) {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm font-medium text-gray-900">
-                    {entry.username}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    {entry.avatar_url && (
+                      <img
+                        src={entry.avatar_url}
+                        alt=""
+                        className="w-6 h-6 rounded-full"
+                      />
+                    )}
+                    <span className="text-sm font-medium text-gray-900">
+                      {entry.username || entry.email.split('@')[0]}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="text-sm text-gray-900 font-mono">

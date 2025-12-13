@@ -1,6 +1,9 @@
 export interface User {
   id: string;
-  username: string;
+  email: string;
+  username: string | null;
+  avatar_url: string | null;
+  auth_provider: 'google' | 'github';
   is_admin: boolean;
   created_at: string;
 }
@@ -29,7 +32,9 @@ export interface Submission {
 export interface LeaderboardEntry {
   rank: number;
   user_id: string;
-  username: string;
+  username: string | null;
+  email: string;
+  avatar_url: string | null;
   best_score: number;
   submission_count: number;
   last_submission: string;

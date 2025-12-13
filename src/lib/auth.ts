@@ -1,45 +1,63 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { User } from '@/types';
+import { supabaseAdmin } from '@/lib/supabase/server';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-);
+// 서버 사이드에서 Supabase 클라이언트 생성
+async function createSupabaseServerClient() {
+  const cookieStore = await cookies();
 
-export async function createToken(user: Omit<User, 'created_at'>): Promise<string> {
-  return new SignJWT({
-    id: user.id,
-    username: user.username,
-    is_admin: user.is_admin
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('7d')
-    .sign(JWT_SECRET);
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+      },
+    }
+  );
 }
 
-export async function verifyToken(token: string): Promise<Omit<User, 'created_at'> | null> {
+// 현재 세션의 사용자 정보 가져오기
+export async function getSession(): Promise<User | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const supabase = await createSupabaseServerClient();
+    const { data: { user: authUser }, error } = await supabase.auth.getUser();
+
+    if (error || !authUser) {
+      return null;
+    }
+
+    // DB에서 사용자 정보 조회
+    const { data: dbUser } = await supabaseAdmin
+      .from('users')
+      .select('*')
+      .eq('id', authUser.id)
+      .single();
+
+    if (dbUser) {
+      return dbUser as User;
+    }
+
+    // DB에 없으면 기본 정보 반환
     return {
-      id: payload.id as string,
-      username: payload.username as string,
-      is_admin: payload.is_admin as boolean,
+      id: authUser.id,
+      email: authUser.email!,
+      username: authUser.user_metadata.full_name || authUser.email?.split('@')[0] || null,
+      avatar_url: authUser.user_metadata.avatar_url || null,
+      auth_provider: (authUser.app_metadata.provider as 'google' | 'github') || 'google',
+      is_admin: false,
+      created_at: authUser.created_at,
     };
   } catch {
     return null;
   }
 }
 
-export async function getSession(): Promise<Omit<User, 'created_at'> | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
-
-  if (!token) return null;
-
-  return verifyToken(token);
-}
-
-export async function requireAuth(): Promise<Omit<User, 'created_at'>> {
+// 인증 필수 - 없으면 에러
+export async function requireAuth(): Promise<User> {
   const session = await getSession();
   if (!session) {
     throw new Error('Unauthorized');
@@ -47,7 +65,8 @@ export async function requireAuth(): Promise<Omit<User, 'created_at'>> {
   return session;
 }
 
-export async function requireAdmin(): Promise<Omit<User, 'created_at'>> {
+// 관리자 권한 필수
+export async function requireAdmin(): Promise<User> {
   const session = await requireAuth();
   if (!session.is_admin) {
     throw new Error('Admin access required');
