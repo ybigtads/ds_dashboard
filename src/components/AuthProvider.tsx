@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { User } from '@/types';
 import { supabase, signInWithGoogle, signInWithGitHub, signOut as supabaseSignOut } from '@/lib/supabase/client';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -11,20 +12,36 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   loginWithGitHub: () => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Supabase Auth User를 앱의 User 타입으로 변환
-async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
-  const provider = supabaseUser.app_metadata.provider as 'google' | 'github';
-  const email = supabaseUser.email!;
-  const avatarUrl = supabaseUser.user_metadata.avatar_url || null;
-  const username = supabaseUser.user_metadata.full_name ||
-                   supabaseUser.user_metadata.name ||
-                   email.split('@')[0];
+// 온보딩이 필요없는 경로들
+const PUBLIC_PATHS = ['/login', '/register', '/auth/callback', '/onboarding'];
 
-  // DB에 사용자 정보 upsert (없으면 생성, 있으면 업데이트)
+// Supabase Auth User를 앱의 User 타입으로 변환하고 DB에 동기화
+async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
+  const provider = (supabaseUser.app_metadata.provider as 'google' | 'github') || 'google';
+  const email = supabaseUser.email || '';
+  const avatarUrl = supabaseUser.user_metadata?.avatar_url || null;
+  const username = supabaseUser.user_metadata?.full_name ||
+                   supabaseUser.user_metadata?.name ||
+                   email.split('@')[0] || 'User';
+
+  // 먼저 기존 사용자 정보 조회
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', supabaseUser.id)
+    .single();
+
+  if (existingUser) {
+    // 기존 사용자면 그대로 반환
+    return existingUser as User;
+  }
+
+  // 신규 사용자면 생성
   const { data, error } = await supabase
     .from('users')
     .upsert({
@@ -34,6 +51,7 @@ async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
       avatar_url: avatarUrl,
       auth_provider: provider,
       provider_id: supabaseUser.id,
+      profile_completed: false,
     }, {
       onConflict: 'id',
     })
@@ -50,6 +68,9 @@ async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
       avatar_url: avatarUrl,
       auth_provider: provider,
       is_admin: false,
+      cohort: null,
+      name: null,
+      profile_completed: false,
       created_at: new Date().toISOString(),
     };
   }
@@ -60,6 +81,28 @@ async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const refreshUser = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // DB에서 최신 사용자 정보 조회
+        const { data: dbUser } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (dbUser) {
+          setUser(dbUser as User);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+    }
+  };
 
   useEffect(() => {
     // 초기 세션 확인
@@ -94,6 +137,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // 프로필 완성 여부 체크 및 온보딩 리다이렉트
+  useEffect(() => {
+    if (loading) return;
+
+    const isPublicPath = PUBLIC_PATHS.some(path => pathname?.startsWith(path));
+
+    if (user && !user.profile_completed && !isPublicPath) {
+      router.push('/onboarding');
+    }
+  }, [user, loading, pathname, router]);
+
   const loginWithGoogle = async () => {
     await signInWithGoogle();
   };
@@ -105,10 +159,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await supabaseSignOut();
     setUser(null);
+    router.push('/');
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithGitHub, logout }}>
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithGitHub, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -44,23 +44,36 @@ export function Header() {
               <div className="w-20 h-8 bg-gray-200 animate-pulse rounded" />
             ) : user ? (
               <>
-                <div className="flex items-center space-x-2">
-                  {user.avatar_url && (
+                <Link
+                  href="/profile"
+                  className="flex items-center space-x-2 hover:bg-gray-100 px-2 py-1 rounded-md transition-colors"
+                >
+                  {user.avatar_url ? (
                     <img
                       src={user.avatar_url}
                       alt=""
                       className="w-8 h-8 rounded-full"
                     />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span className="text-sm text-blue-600 font-bold">
+                        {(user.name || user.username || 'U').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
                   )}
                   <span className="text-sm text-gray-600">
-                    {user.username || user.email}
+                    {user.cohort && user.name ? (
+                      <>{user.cohort}기 {user.name}</>
+                    ) : (
+                      user.username || user.email.split('@')[0]
+                    )}
                     {user.is_admin && (
                       <span className="ml-1 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
                         Admin
                       </span>
                     )}
                   </span>
-                </div>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="text-sm text-gray-600 hover:text-gray-900"

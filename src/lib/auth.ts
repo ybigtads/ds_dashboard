@@ -49,6 +49,9 @@ export async function getSession(): Promise<User | null> {
       avatar_url: authUser.user_metadata.avatar_url || null,
       auth_provider: (authUser.app_metadata.provider as 'google' | 'github') || 'google',
       is_admin: false,
+      cohort: null,
+      name: null,
+      profile_completed: false,
       created_at: authUser.created_at,
     };
   } catch {

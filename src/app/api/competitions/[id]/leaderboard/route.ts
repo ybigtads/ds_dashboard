@@ -35,7 +35,9 @@ export async function GET(
         users (
           username,
           email,
-          avatar_url
+          avatar_url,
+          cohort,
+          name
         )
       `)
       .eq('competition_id', id)
@@ -52,6 +54,8 @@ export async function GET(
       username: string | null;
       email: string;
       avatar_url: string | null;
+      cohort: number | null;
+      name: string | null;
       best_score: number;
       submission_count: number;
       last_submission: string;
@@ -59,10 +63,12 @@ export async function GET(
 
     for (const sub of submissions || []) {
       const userId = sub.user_id;
-      const users = sub.users as unknown as { username: string | null; email: string; avatar_url: string | null } | null;
+      const users = sub.users as unknown as { username: string | null; email: string; avatar_url: string | null; cohort: number | null; name: string | null } | null;
       const username = users?.username || null;
       const email = users?.email || 'Unknown';
       const avatarUrl = users?.avatar_url || null;
+      const cohort = users?.cohort || null;
+      const name = users?.name || null;
       const score = sub.score as number;
       const submittedAt = sub.submitted_at;
 
@@ -74,6 +80,8 @@ export async function GET(
           username,
           email,
           avatar_url: avatarUrl,
+          cohort,
+          name,
           best_score: score,
           submission_count: 1,
           last_submission: submittedAt,
