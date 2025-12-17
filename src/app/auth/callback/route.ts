@@ -18,9 +18,14 @@ export async function GET(request: NextRequest) {
             return cookieStore.getAll();
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
+            try {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                cookieStore.set(name, value, options);
+              });
+            } catch (error) {
+              // Server Component에서 호출될 경우 무시
+              // Route Handler에서는 정상 작동
+            }
           },
         },
       }
@@ -34,6 +39,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 성공 시 competitions 페이지로 리다이렉트
-  return NextResponse.redirect(new URL('/competitions', requestUrl.origin));
+  // 성공 시 tasks 페이지로 리다이렉트
+  return NextResponse.redirect(new URL('/tasks', requestUrl.origin));
 }
