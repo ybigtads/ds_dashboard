@@ -72,6 +72,7 @@ export const metricLabels: Record<string, string> = {
   accuracy: 'Accuracy',
   f1: 'F1 Score',
   auc: 'AUC (Area Under Curve)',
+  map50: 'mAP@0.5 (Object Detection)',
 };
 
 export const metricShortLabels: Record<string, string> = {
@@ -79,6 +80,7 @@ export const metricShortLabels: Record<string, string> = {
   accuracy: 'Accuracy',
   f1: 'F1',
   auc: 'AUC',
+  map50: 'mAP@0.5',
 };
 
 export const statusLabels: Record<string, string> = {

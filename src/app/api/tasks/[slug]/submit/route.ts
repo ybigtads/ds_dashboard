@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { getSession } from '@/lib/auth';
 import { parseCSV, getTargetColumn, csvToObjects } from '@/lib/csv';
-import { evaluators, higherIsBetter } from '@/lib/evaluators';
+import { evaluators, higherIsBetter, requiresFullData } from '@/lib/evaluators';
 import { EvaluationMetric } from '@/types';
 
 // 커스텀 채점 함수 실행
@@ -147,31 +147,40 @@ export async function POST(request: NextRequest, { params }: Props) {
       }
     } else {
       // 기본 평가 지표 사용
-      const predictions = getTargetColumn(submissionCSV);
-      const actual = getTargetColumn(answerCSV);
-
-      if (predictions.length !== actual.length) {
-        return NextResponse.json({
-          error: `Row count mismatch: submission has ${predictions.length} rows, expected ${actual.length}`,
-        }, { status: 400 });
-      }
-
       metric = task.evaluation_metric as EvaluationMetric;
       const evaluator = evaluators[metric];
       isHigherBetter = higherIsBetter[metric];
 
       try {
-        if (metric === 'rmse' || metric === 'auc') {
-          const predNumbers = predictions.map((p) => parseFloat(p));
-          const actualNumbers = actual.map((a) => parseFloat(a));
+        // mAP@0.5 등 전체 CSV 데이터가 필요한 메트릭
+        if (requiresFullData[metric]) {
+          const submissionData = csvToObjects(submissionCSV);
+          const answerData = csvToObjects(answerCSV);
 
-          if (predNumbers.some(isNaN) || actualNumbers.some(isNaN)) {
-            return NextResponse.json({ error: 'Invalid numeric values in CSV' }, { status: 400 });
+          score = evaluator(submissionData, answerData);
+        } else {
+          // 일반 메트릭 (단일 컬럼 비교)
+          const predictions = getTargetColumn(submissionCSV);
+          const actual = getTargetColumn(answerCSV);
+
+          if (predictions.length !== actual.length) {
+            return NextResponse.json({
+              error: `Row count mismatch: submission has ${predictions.length} rows, expected ${actual.length}`,
+            }, { status: 400 });
           }
 
-          score = evaluator(predNumbers, actualNumbers);
-        } else {
-          score = evaluator(predictions, actual);
+          if (metric === 'rmse' || metric === 'auc') {
+            const predNumbers = predictions.map((p) => parseFloat(p));
+            const actualNumbers = actual.map((a) => parseFloat(a));
+
+            if (predNumbers.some(isNaN) || actualNumbers.some(isNaN)) {
+              return NextResponse.json({ error: 'Invalid numeric values in CSV' }, { status: 400 });
+            }
+
+            score = evaluator(predNumbers, actualNumbers);
+          } else {
+            score = evaluator(predictions, actual);
+          }
         }
       } catch (err) {
         return NextResponse.json({

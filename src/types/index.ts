@@ -1,7 +1,7 @@
 // ==================== 기본 타입 ====================
 
 export type UserRole = 'user' | 'creator' | 'admin';
-export type EvaluationMetric = 'rmse' | 'accuracy' | 'f1' | 'auc';
+export type EvaluationMetric = 'rmse' | 'accuracy' | 'f1' | 'auc' | 'map50';
 export type TaskStatus = 'upcoming' | 'active' | 'ended';
 
 // ==================== User ====================

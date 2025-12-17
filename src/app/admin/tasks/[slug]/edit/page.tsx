@@ -262,6 +262,7 @@ export default function EditTaskPage({ params }: Props) {
                   <option value="accuracy">Accuracy</option>
                   <option value="f1">F1 Score</option>
                   <option value="auc">AUC (Area Under Curve)</option>
+                  <option value="map50">mAP@0.5 (Object Detection)</option>
                 </select>
               </div>
 
