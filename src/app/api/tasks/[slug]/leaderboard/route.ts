@@ -33,7 +33,7 @@ export async function GET(request: NextRequest, { params }: Props) {
         user_id,
         score,
         submitted_at,
-        users (
+        users!user_id (
           username,
           email,
           avatar_url,
