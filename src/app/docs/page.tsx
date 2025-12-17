@@ -10,15 +10,11 @@ export default function DocsPage() {
   const { user } = useAuth();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('전체');
-
-  const categories = ['전체', 'PyTorch', 'VESSL', '가이드', '기타'];
 
   useEffect(() => {
     const fetchDocs = async () => {
       try {
-        const params = selectedCategory !== '전체' ? `?category=${selectedCategory}` : '';
-        const res = await fetch(`/api/docs${params}`);
+        const res = await fetch('/api/docs');
         if (res.ok) {
           const data = await res.json();
           setDocs(data);
@@ -31,7 +27,7 @@ export default function DocsPage() {
     };
 
     fetchDocs();
-  }, [selectedCategory]);
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -48,22 +44,6 @@ export default function DocsPage() {
             문서 작성
           </Link>
         )}
-      </div>
-
-      <div className="flex gap-2 mb-6 overflow-x-auto">
-        {categories.map(category => (
-          <button
-            key={category}
-            onClick={() => setSelectedCategory(category)}
-            className={`px-3 py-1.5 text-sm rounded-full whitespace-nowrap transition-colors ${
-              selectedCategory === category
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {category}
-          </button>
-        ))}
       </div>
 
       {loading ? (
@@ -95,13 +75,6 @@ export default function DocsPage() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    {doc.category && (
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                        {doc.category}
-                      </span>
-                    )}
-                  </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">
                     {doc.title}
                   </h3>

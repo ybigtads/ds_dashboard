@@ -10,13 +10,10 @@ export default function NewDocPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     title: '',
-    content: '',
-    category: ''
+    content: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-
-  const categories = ['PyTorch', 'VESSL', '가이드', '기타'];
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -101,23 +98,6 @@ export default function NewDocPage() {
             placeholder="문서 제목을 입력하세요"
             maxLength={200}
           />
-        </div>
-
-        <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-            카테고리
-          </label>
-          <select
-            id="category"
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">카테고리 선택 (선택사항)</option>
-            {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
         </div>
 
         <div>
