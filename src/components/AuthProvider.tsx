@@ -133,7 +133,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 초기 세션 확인
     const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Auth getSession error:', error);
+          setLoading(false);
+          return;
+        }
         if (session?.user) {
           const appUser = await syncUserToDatabase(session.user);
           setUser(appUser);
@@ -144,6 +149,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     };
+
+    // 타임아웃 설정 - 5초 후에도 로딩 중이면 강제로 해제
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
 
     initAuth();
 
@@ -158,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);
