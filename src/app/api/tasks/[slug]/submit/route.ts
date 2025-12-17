@@ -48,9 +48,9 @@ export async function POST(request: NextRequest, { params }: Props) {
       return NextResponse.json({ error: 'Answer file not available' }, { status: 400 });
     }
 
-    // Check daily submission limit
+    // Check daily submission limit (UTC 기준)
     const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    todayStart.setUTCHours(0, 0, 0, 0);
 
     const { count: todayCount } = await supabaseAdmin
       .from('submissions')
