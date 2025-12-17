@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { supabase } from '@/lib/supabase/client';
 
 export default function OnboardingPage() {
   const [cohort, setCohort] = useState('');
@@ -14,9 +13,9 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // 이미 프로필이 완성된 사용자는 competitions로 이동
+    // 이미 프로필이 완성된 사용자는 tasks로 이동
     if (user?.profile_completed) {
-      router.push('/competitions');
+      router.push('/tasks');
     }
   }, [user, router]);
 
@@ -38,25 +37,22 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          cohort: cohortNum,
-          name: name.trim(),
-          profile_completed: true,
-        })
-        .eq('id', user?.id);
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cohort: cohortNum, name: name.trim() }),
+      });
 
-      if (updateError) {
-        console.error('Profile update error:', updateError);
-        setError('프로필 업데이트에 실패했습니다. 다시 시도해주세요.');
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || '프로필 업데이트에 실패했습니다.');
         return;
       }
 
       // AuthProvider의 사용자 정보 갱신
       await refreshUser();
 
-      router.push('/competitions');
+      router.push('/tasks');
     } catch (err) {
       console.error('Profile update error:', err);
       setError('오류가 발생했습니다. 다시 시도해주세요.');
