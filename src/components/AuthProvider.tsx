@@ -3,8 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { User, UserRole } from '@/types';
-import { createClient, signInWithGoogle, signInWithGitHub, signOut as supabaseSignOut } from '@/lib/supabase/client';
-import { User as SupabaseUser } from '@supabase/supabase-js';
+import { signInWithGoogle, signInWithGitHub, signOut as supabaseSignOut } from '@/lib/supabase/client';
 
 interface AuthContextType {
   user: User | null;
@@ -28,69 +27,32 @@ function getUserRole(user: Partial<User>): UserRole {
   return user.is_admin ? 'admin' : 'user';
 }
 
-async function fetchUserFromDB(supabase: ReturnType<typeof createClient>, userId: string): Promise<User | null> {
-  const { data } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
+// API를 통해 현재 사용자 정보 가져오기
+async function fetchCurrentUser(): Promise<User | null> {
+  try {
+    const res = await fetch('/api/auth/me', {
+      credentials: 'include',
+    });
 
-  if (data) {
-    return { ...data, role: getUserRole(data) } as User;
+    if (!res.ok) {
+      console.error('Failed to fetch user:', res.status);
+      return null;
+    }
+
+    const data = await res.json();
+
+    if (data.user) {
+      return {
+        ...data.user,
+        role: getUserRole(data.user),
+      } as User;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return null;
   }
-  return null;
-}
-
-async function syncUserToDatabase(supabase: ReturnType<typeof createClient>, supabaseUser: SupabaseUser): Promise<User> {
-  const provider = (supabaseUser.app_metadata.provider as 'google' | 'github') || 'google';
-  const email = supabaseUser.email || '';
-  const avatarUrl = supabaseUser.user_metadata?.avatar_url || null;
-  const username = supabaseUser.user_metadata?.full_name ||
-                   supabaseUser.user_metadata?.name ||
-                   email.split('@')[0] || 'User';
-
-  // 기존 사용자 확인
-  const existingUser = await fetchUserFromDB(supabase, supabaseUser.id);
-  if (existingUser) {
-    return existingUser;
-  }
-
-  // 신규 사용자 생성
-  const { data, error } = await supabase
-    .from('users')
-    .upsert({
-      id: supabaseUser.id,
-      email,
-      username,
-      avatar_url: avatarUrl,
-      auth_provider: provider,
-      provider_id: supabaseUser.id,
-      role: 'user',
-      profile_completed: false,
-    }, {
-      onConflict: 'id',
-    })
-    .select()
-    .single();
-
-  if (error || !data) {
-    console.error('Failed to sync user:', error);
-    return {
-      id: supabaseUser.id,
-      email,
-      username,
-      avatar_url: avatarUrl,
-      auth_provider: provider,
-      role: 'user',
-      is_admin: false,
-      cohort: null,
-      name: null,
-      profile_completed: false,
-      created_at: new Date().toISOString(),
-    };
-  }
-
-  return { ...data, role: getUserRole(data) } as User;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -100,71 +62,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const refreshUser = useCallback(async () => {
-    const supabase = createClient();
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
-      const dbUser = await fetchUserFromDB(supabase, authUser.id);
-      if (dbUser) {
-        setUser(dbUser);
-      }
-    }
+    const currentUser = await fetchCurrentUser();
+    setUser(currentUser);
   }, []);
 
   useEffect(() => {
-    const supabase = createClient();
+    let mounted = true;
 
     const initAuth = async () => {
       try {
-        // getUser는 서버에서 세션을 검증 (getSession보다 안전)
-        const { data: { user: authUser }, error } = await supabase.auth.getUser();
+        const currentUser = await fetchCurrentUser();
 
-        if (error) {
-          console.error('Auth error:', error.message);
-          setUser(null);
+        if (mounted) {
+          setUser(currentUser);
           setLoading(false);
-          return;
-        }
-
-        if (authUser) {
-          const appUser = await syncUserToDatabase(supabase, authUser);
-          setUser(appUser);
-        } else {
-          setUser(null);
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
       }
     };
 
     initAuth();
 
-    // Auth 상태 변화 구독
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event);
-
-        if (event === 'SIGNED_IN' && session?.user) {
-          const appUser = await syncUserToDatabase(supabase, session.user);
-          setUser(appUser);
-          setLoading(false);
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setLoading(false);
-        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          // 토큰 갱신 시 사용자 정보 다시 로드
-          const dbUser = await fetchUserFromDB(supabase, session.user.id);
-          if (dbUser) {
-            setUser(dbUser);
-          }
-        }
-      }
-    );
-
     return () => {
-      subscription.unsubscribe();
+      mounted = false;
     };
   }, []);
 
@@ -186,7 +111,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await supabaseSignOut();
+    try {
+      await supabaseSignOut();
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
     setUser(null);
     router.push('/');
   }, [router]);
