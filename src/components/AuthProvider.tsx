@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { User, UserRole } from '@/types';
 import { supabase, signInWithGoogle, signInWithGitHub, signOut as supabaseSignOut } from '@/lib/supabase/client';
@@ -129,6 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // 초기화 완료 여부를 추적하는 ref
+  const initCompleted = useRef(false);
+
   useEffect(() => {
     // 초기 세션 확인
     const initAuth = async () => {
@@ -136,7 +139,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Auth getSession error:', error);
-          setLoading(false);
           return;
         }
         if (session?.user) {
@@ -146,13 +148,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('Failed to initialize auth:', error);
       } finally {
+        initCompleted.current = true;
         setLoading(false);
       }
     };
 
-    // 타임아웃 설정 - 5초 후에도 로딩 중이면 강제로 해제
+    // 타임아웃 설정 - initAuth가 완료되지 않은 경우에만 강제 해제
     const timeout = setTimeout(() => {
-      setLoading(false);
+      if (!initCompleted.current) {
+        console.warn('Auth initialization timed out after 5 seconds');
+        setLoading(false);
+      }
     }, 5000);
 
     initAuth();
