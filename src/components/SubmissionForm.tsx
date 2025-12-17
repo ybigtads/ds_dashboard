@@ -3,7 +3,8 @@
 import { useState } from 'react';
 
 interface SubmissionFormProps {
-  competitionId: string;
+  competitionId?: string;  // @deprecated
+  taskSlug?: string;
   onSuccess?: () => void;
 }
 
@@ -13,7 +14,7 @@ interface SubmissionResult {
   higher_is_better: boolean;
 }
 
-export function SubmissionForm({ competitionId, onSuccess }: SubmissionFormProps) {
+export function SubmissionForm({ competitionId, taskSlug, onSuccess }: SubmissionFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,7 +32,12 @@ export function SubmissionForm({ competitionId, onSuccess }: SubmissionFormProps
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch(`/api/competitions/${competitionId}/submit`, {
+      // taskSlug 또는 competitionId 사용
+      const apiPath = taskSlug
+        ? `/api/tasks/${taskSlug}/submit`
+        : `/api/competitions/${competitionId}/submit`;
+
+      const res = await fetch(apiPath, {
         method: 'POST',
         body: formData,
       });

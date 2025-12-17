@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { User } from '@/types';
+import { User, UserRole } from '@/types';
 import { supabase, signInWithGoogle, signInWithGitHub, signOut as supabaseSignOut } from '@/lib/supabase/client';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -13,12 +13,23 @@ interface AuthContextType {
   loginWithGitHub: () => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  // 권한 체크 헬퍼
+  isAdmin: boolean;
+  isCreator: boolean;
+  isCreatorOrAbove: boolean;
+  hasRole: (roles: UserRole[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 // 온보딩이 필요없는 경로들
 const PUBLIC_PATHS = ['/login', '/register', '/auth/callback', '/onboarding'];
+
+// 사용자 역할 결정 (role 또는 is_admin 기반)
+function getUserRole(user: Partial<User>): UserRole {
+  if (user.role) return user.role;
+  return user.is_admin ? 'admin' : 'user';
+}
 
 // Supabase Auth User를 앱의 User 타입으로 변환하고 DB에 동기화
 async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
@@ -37,8 +48,12 @@ async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
     .single();
 
   if (existingUser) {
-    // 기존 사용자면 그대로 반환
-    return existingUser as User;
+    // 기존 사용자면 role 설정 후 반환
+    const role = getUserRole(existingUser);
+    return {
+      ...existingUser,
+      role,
+    } as User;
   }
 
   // 신규 사용자면 생성
@@ -51,6 +66,7 @@ async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
       avatar_url: avatarUrl,
       auth_provider: provider,
       provider_id: supabaseUser.id,
+      role: 'user',
       profile_completed: false,
     }, {
       onConflict: 'id',
@@ -67,6 +83,7 @@ async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
       username,
       avatar_url: avatarUrl,
       auth_provider: provider,
+      role: 'user',
       is_admin: false,
       cohort: null,
       name: null,
@@ -75,7 +92,11 @@ async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
     };
   }
 
-  return data as User;
+  const role = getUserRole(data);
+  return {
+    ...data,
+    role,
+  } as User;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -96,7 +117,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .single();
 
         if (dbUser) {
-          setUser(dbUser as User);
+          const role = getUserRole(dbUser);
+          setUser({
+            ...dbUser,
+            role,
+          } as User);
         }
       }
     } catch (error) {
@@ -162,8 +187,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/');
   };
 
+  // 권한 체크 헬퍼
+  const userRole = user ? getUserRole(user) : null;
+  const isAdmin = userRole === 'admin' || user?.is_admin === true;
+  const isCreator = userRole === 'creator';
+  const isCreatorOrAbove = isCreator || isAdmin;
+
+  const hasRole = (roles: UserRole[]): boolean => {
+    if (!userRole) return false;
+    return roles.includes(userRole);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithGitHub, logout, refreshUser }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      loginWithGoogle,
+      loginWithGitHub,
+      logout,
+      refreshUser,
+      isAdmin,
+      isCreator,
+      isCreatorOrAbove,
+      hasRole,
+    }}>
       {children}
     </AuthContext.Provider>
   );
