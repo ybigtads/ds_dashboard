@@ -1,26 +1,28 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-function createSupabaseClient(): SupabaseClient {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      `Missing Supabase environment variables. ` +
-      `NEXT_PUBLIC_SUPABASE_URL: ${supabaseUrl ? 'set' : 'missing'}, ` +
-      `NEXT_PUBLIC_SUPABASE_ANON_KEY: ${supabaseAnonKey ? 'set' : 'missing'}. ` +
-      `Please check your .env.local file.`
-    );
-  }
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    `Missing Supabase environment variables. ` +
+    `NEXT_PUBLIC_SUPABASE_URL: ${supabaseUrl ? 'set' : 'missing'}, ` +
+    `NEXT_PUBLIC_SUPABASE_ANON_KEY: ${supabaseAnonKey ? 'set' : 'missing'}. ` +
+    `Please check your .env.local file.`
+  );
 }
 
-export const supabase = createSupabaseClient();
+export function createClient() {
+  return createBrowserClient(supabaseUrl!, supabaseAnonKey!);
+}
+
+// 하위 호환성을 위한 싱글톤 (권장하지 않음 - createClient() 사용 권장)
+export const supabase = createClient();
 
 // OAuth 로그인 함수들
 export async function signInWithGoogle() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
+  const client = createClient();
+  const { data, error } = await client.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: `${window.location.origin}/auth/callback`,
@@ -32,7 +34,8 @@ export async function signInWithGoogle() {
 }
 
 export async function signInWithGitHub() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
+  const client = createClient();
+  const { data, error } = await client.auth.signInWithOAuth({
     provider: 'github',
     options: {
       redirectTo: `${window.location.origin}/auth/callback`,
@@ -44,18 +47,7 @@ export async function signInWithGitHub() {
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  const client = createClient();
+  const { error } = await client.auth.signOut();
   if (error) throw error;
-}
-
-export async function getSession() {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  return session;
-}
-
-export async function getUser() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  return user;
 }

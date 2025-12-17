@@ -1,9 +1,9 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { User, UserRole } from '@/types';
-import { supabase, signInWithGoogle, signInWithGitHub, signOut as supabaseSignOut } from '@/lib/supabase/client';
+import { createClient, signInWithGoogle, signInWithGitHub, signOut as supabaseSignOut } from '@/lib/supabase/client';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -13,7 +13,6 @@ interface AuthContextType {
   loginWithGitHub: () => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  // 권한 체크 헬퍼
   isAdmin: boolean;
   isCreator: boolean;
   isCreatorOrAbove: boolean;
@@ -22,17 +21,27 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// 온보딩이 필요없는 경로들
 const PUBLIC_PATHS = ['/login', '/register', '/auth/callback', '/onboarding'];
 
-// 사용자 역할 결정 (role 또는 is_admin 기반)
 function getUserRole(user: Partial<User>): UserRole {
   if (user.role) return user.role;
   return user.is_admin ? 'admin' : 'user';
 }
 
-// Supabase Auth User를 앱의 User 타입으로 변환하고 DB에 동기화
-async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
+async function fetchUserFromDB(supabase: ReturnType<typeof createClient>, userId: string): Promise<User | null> {
+  const { data } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (data) {
+    return { ...data, role: getUserRole(data) } as User;
+  }
+  return null;
+}
+
+async function syncUserToDatabase(supabase: ReturnType<typeof createClient>, supabaseUser: SupabaseUser): Promise<User> {
   const provider = (supabaseUser.app_metadata.provider as 'google' | 'github') || 'google';
   const email = supabaseUser.email || '';
   const avatarUrl = supabaseUser.user_metadata?.avatar_url || null;
@@ -40,23 +49,13 @@ async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
                    supabaseUser.user_metadata?.name ||
                    email.split('@')[0] || 'User';
 
-  // 먼저 기존 사용자 정보 조회
-  const { data: existingUser } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', supabaseUser.id)
-    .single();
-
+  // 기존 사용자 확인
+  const existingUser = await fetchUserFromDB(supabase, supabaseUser.id);
   if (existingUser) {
-    // 기존 사용자면 role 설정 후 반환
-    const role = getUserRole(existingUser);
-    return {
-      ...existingUser,
-      role,
-    } as User;
+    return existingUser;
   }
 
-  // 신규 사용자면 생성
+  // 신규 사용자 생성
   const { data, error } = await supabase
     .from('users')
     .upsert({
@@ -74,9 +73,8 @@ async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
     .select()
     .single();
 
-  if (error) {
-    console.error('Failed to sync user to database:', error);
-    // DB 동기화 실패해도 기본 정보 반환
+  if (error || !data) {
+    console.error('Failed to sync user:', error);
     return {
       id: supabaseUser.id,
       email,
@@ -92,11 +90,7 @@ async function syncUserToDatabase(supabaseUser: SupabaseUser): Promise<User> {
     };
   }
 
-  const role = getUserRole(data);
-  return {
-    ...data,
-    role,
-  } as User;
+  return { ...data, role: getUserRole(data) } as User;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -105,115 +99,107 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const refreshUser = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // DB에서 최신 사용자 정보 조회
-        const { data: dbUser } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (dbUser) {
-          const role = getUserRole(dbUser);
-          setUser({
-            ...dbUser,
-            role,
-          } as User);
-        }
+  const refreshUser = useCallback(async () => {
+    const supabase = createClient();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser) {
+      const dbUser = await fetchUserFromDB(supabase, authUser.id);
+      if (dbUser) {
+        setUser(dbUser);
       }
-    } catch (error) {
-      console.error('Failed to refresh user:', error);
     }
-  };
-
-  // 초기화 완료 여부를 추적하는 ref
-  const initCompleted = useRef(false);
+  }, []);
 
   useEffect(() => {
-    // 초기 세션 확인
+    const supabase = createClient();
+
     const initAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // getUser는 서버에서 세션을 검증 (getSession보다 안전)
+        const { data: { user: authUser }, error } = await supabase.auth.getUser();
+
         if (error) {
-          console.error('Auth getSession error:', error);
+          console.error('Auth error:', error.message);
+          setUser(null);
+          setLoading(false);
           return;
         }
-        if (session?.user) {
-          const appUser = await syncUserToDatabase(session.user);
+
+        if (authUser) {
+          const appUser = await syncUserToDatabase(supabase, authUser);
           setUser(appUser);
+        } else {
+          setUser(null);
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
+        setUser(null);
       } finally {
-        initCompleted.current = true;
         setLoading(false);
       }
     };
-
-    // 타임아웃 설정 - initAuth가 완료되지 않은 경우에만 강제 해제
-    const timeout = setTimeout(() => {
-      if (!initCompleted.current) {
-        console.warn('Auth initialization timed out after 5 seconds');
-        setLoading(false);
-      }
-    }, 5000);
 
     initAuth();
 
     // Auth 상태 변화 구독
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const appUser = await syncUserToDatabase(session.user);
-        setUser(appUser);
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event);
+
+        if (event === 'SIGNED_IN' && session?.user) {
+          const appUser = await syncUserToDatabase(supabase, session.user);
+          setUser(appUser);
+          setLoading(false);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setLoading(false);
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // 토큰 갱신 시 사용자 정보 다시 로드
+          const dbUser = await fetchUserFromDB(supabase, session.user.id);
+          if (dbUser) {
+            setUser(dbUser);
+          }
+        }
       }
-    });
+    );
 
     return () => {
-      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);
 
-  // 프로필 완성 여부 체크 및 온보딩 리다이렉트
+  // 프로필 미완성 시 온보딩으로 리다이렉트
   useEffect(() => {
     if (loading) return;
-
     const isPublicPath = PUBLIC_PATHS.some(path => pathname?.startsWith(path));
-
     if (user && !user.profile_completed && !isPublicPath) {
       router.push('/onboarding');
     }
   }, [user, loading, pathname, router]);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = useCallback(async () => {
     await signInWithGoogle();
-  };
+  }, []);
 
-  const loginWithGitHub = async () => {
+  const loginWithGitHub = useCallback(async () => {
     await signInWithGitHub();
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await supabaseSignOut();
     setUser(null);
     router.push('/');
-  };
+  }, [router]);
 
-  // 권한 체크 헬퍼
   const userRole = user ? getUserRole(user) : null;
   const isAdmin = userRole === 'admin' || user?.is_admin === true;
   const isCreator = userRole === 'creator';
   const isCreatorOrAbove = isCreator || isAdmin;
 
-  const hasRole = (roles: UserRole[]): boolean => {
+  const hasRole = useCallback((roles: UserRole[]): boolean => {
     if (!userRole) return false;
     return roles.includes(userRole);
-  };
+  }, [userRole]);
 
   return (
     <AuthContext.Provider value={{
