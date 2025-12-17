@@ -111,7 +111,7 @@ export default function TaskDetailPage({ params }: Props) {
             </div>
             <div>
               <span className="text-gray-500">평가 지표</span>
-              <p className="font-medium">{metricLabels[task.evaluation_metric]}</p>
+              <p className="font-medium">{task.evaluation_metric ? metricLabels[task.evaluation_metric] : '커스텀'}</p>
             </div>
             <div>
               <span className="text-gray-500">참가자</span>

@@ -39,7 +39,7 @@ export function TaskCard({ task }: TaskCardProps) {
           <div className="col-span-2">
             <span className="block text-gray-400">평가 지표</span>
             <span className="font-medium text-gray-700">
-              {metricShortLabels[task.evaluation_metric] || task.evaluation_metric.toUpperCase()}
+              {task.evaluation_metric ? (metricShortLabels[task.evaluation_metric] || task.evaluation_metric.toUpperCase()) : '커스텀'}
             </span>
           </div>
         </div>

@@ -6,11 +6,12 @@ import { higherIsBetter } from '@/lib/evaluators';
 
 interface LeaderboardProps {
   entries: LeaderboardEntry[];
-  metric: EvaluationMetric;
+  metric: EvaluationMetric | null;
 }
 
 export function Leaderboard({ entries, metric }: LeaderboardProps) {
-  const isHigherBetter = higherIsBetter[metric];
+  // 커스텀 채점(metric이 null)인 경우 기본값은 "higher is better"
+  const isHigherBetter = metric ? higherIsBetter[metric] : true;
 
   if (entries.length === 0) {
     return (

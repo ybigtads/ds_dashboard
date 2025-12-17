@@ -48,3 +48,14 @@ export function getTargetColumn(csv: ParsedCSV): string[] {
   const lastIndex = csv.headers.length - 1;
   return csv.rows.map(row => row[lastIndex]);
 }
+
+// CSV를 객체 배열로 변환 (커스텀 채점용)
+export function csvToObjects(csv: ParsedCSV): Record<string, string>[] {
+  return csv.rows.map(row => {
+    const obj: Record<string, string> = {};
+    csv.headers.forEach((header, index) => {
+      obj[header] = row[index];
+    });
+    return obj;
+  });
+}

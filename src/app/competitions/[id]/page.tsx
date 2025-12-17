@@ -99,7 +99,7 @@ export default function CompetitionDetailPage({ params }: Props) {
             </div>
             <div>
               <span className="text-gray-500">Evaluation Metric</span>
-              <p className="font-medium">{metricLabels[competition.evaluation_metric]}</p>
+              <p className="font-medium">{competition.evaluation_metric ? metricLabels[competition.evaluation_metric] : 'Custom'}</p>
             </div>
             <div>
               <span className="text-gray-500">Participants</span>

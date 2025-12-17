@@ -1,9 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { getSession } from '@/lib/auth';
-import { parseCSV, getTargetColumn } from '@/lib/csv';
+import { parseCSV, getTargetColumn, csvToObjects } from '@/lib/csv';
 import { evaluators, higherIsBetter } from '@/lib/evaluators';
 import { EvaluationMetric } from '@/types';
+
+// 커스텀 채점 함수 실행
+function executeCustomScoring(
+  code: string,
+  answerData: Record<string, string>[],
+  submissionData: Record<string, string>[]
+): number {
+  // 코드에서 score 함수 추출 및 실행
+  const wrappedCode = `
+    ${code}
+    return score(answer, submission);
+  `;
+
+  const scoreFn = new Function('answer', 'submission', wrappedCode);
+  const result = scoreFn(answerData, submissionData);
+
+  if (typeof result !== 'number' || isNaN(result)) {
+    throw new Error('채점 함수가 유효한 숫자를 반환하지 않았습니다.');
+  }
+
+  return result;
+}
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -43,9 +65,14 @@ export async function POST(request: NextRequest, { params }: Props) {
       return NextResponse.json({ error: 'Task has ended' }, { status: 400 });
     }
 
-    // Check if answer file exists
+    // Check if answer file exists (커스텀 채점도 정답 파일 필요)
     if (!task.answer_file_path) {
       return NextResponse.json({ error: 'Answer file not available' }, { status: 400 });
+    }
+
+    // 커스텀 채점인데 코드가 없는 경우
+    if (task.use_custom_scoring && !task.custom_scoring_code) {
+      return NextResponse.json({ error: 'Custom scoring code not configured' }, { status: 400 });
     }
 
     // Check daily submission limit (UTC 기준)
@@ -95,38 +122,62 @@ export async function POST(request: NextRequest, { params }: Props) {
     const answerContent = await answerData.text();
     const answerCSV = parseCSV(answerContent);
 
-    // Get predictions and actual values
-    const predictions = getTargetColumn(submissionCSV);
-    const actual = getTargetColumn(answerCSV);
-
-    if (predictions.length !== actual.length) {
-      return NextResponse.json({
-        error: `Row count mismatch: submission has ${predictions.length} rows, expected ${actual.length}`,
-      }, { status: 400 });
-    }
-
-    // Calculate score
-    const metric = task.evaluation_metric as EvaluationMetric;
-    const evaluator = evaluators[metric];
-
     let score: number;
-    try {
-      if (metric === 'rmse' || metric === 'auc') {
-        const predNumbers = predictions.map((p) => parseFloat(p));
-        const actualNumbers = actual.map((a) => parseFloat(a));
+    let metric: EvaluationMetric | null = null;
+    let isHigherBetter = true; // 커스텀 채점의 기본값
 
-        if (predNumbers.some(isNaN) || actualNumbers.some(isNaN)) {
-          return NextResponse.json({ error: 'Invalid numeric values in CSV' }, { status: 400 });
+    if (task.use_custom_scoring && task.custom_scoring_code) {
+      // 커스텀 채점 함수 사용
+      try {
+        const answerData = csvToObjects(answerCSV);
+        const submissionData = csvToObjects(submissionCSV);
+
+        if (submissionData.length !== answerData.length) {
+          return NextResponse.json({
+            error: `Row count mismatch: submission has ${submissionData.length} rows, expected ${answerData.length}`,
+          }, { status: 400 });
         }
 
-        score = evaluator(predNumbers, actualNumbers);
-      } else {
-        score = evaluator(predictions, actual);
+        score = executeCustomScoring(task.custom_scoring_code, answerData, submissionData);
+      } catch (err) {
+        console.error('Custom scoring error:', err);
+        return NextResponse.json({
+          error: err instanceof Error ? err.message : '커스텀 채점 중 오류가 발생했습니다.',
+        }, { status: 400 });
       }
-    } catch (err) {
-      return NextResponse.json({
-        error: err instanceof Error ? err.message : 'Error calculating score',
-      }, { status: 400 });
+    } else {
+      // 기본 평가 지표 사용
+      const predictions = getTargetColumn(submissionCSV);
+      const actual = getTargetColumn(answerCSV);
+
+      if (predictions.length !== actual.length) {
+        return NextResponse.json({
+          error: `Row count mismatch: submission has ${predictions.length} rows, expected ${actual.length}`,
+        }, { status: 400 });
+      }
+
+      metric = task.evaluation_metric as EvaluationMetric;
+      const evaluator = evaluators[metric];
+      isHigherBetter = higherIsBetter[metric];
+
+      try {
+        if (metric === 'rmse' || metric === 'auc') {
+          const predNumbers = predictions.map((p) => parseFloat(p));
+          const actualNumbers = actual.map((a) => parseFloat(a));
+
+          if (predNumbers.some(isNaN) || actualNumbers.some(isNaN)) {
+            return NextResponse.json({ error: 'Invalid numeric values in CSV' }, { status: 400 });
+          }
+
+          score = evaluator(predNumbers, actualNumbers);
+        } else {
+          score = evaluator(predictions, actual);
+        }
+      } catch (err) {
+        return NextResponse.json({
+          error: err instanceof Error ? err.message : 'Error calculating score',
+        }, { status: 400 });
+      }
     }
 
     // Save submission file
@@ -159,8 +210,8 @@ export async function POST(request: NextRequest, { params }: Props) {
     return NextResponse.json({
       submission,
       score,
-      metric,
-      higher_is_better: higherIsBetter[metric],
+      metric: metric || 'custom',
+      higher_is_better: isHigherBetter,
       remaining_submissions: maxSubmissions - (todayCount || 0) - 1,
     });
   } catch (error) {

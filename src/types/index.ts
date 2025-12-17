@@ -49,7 +49,7 @@ export interface Task {
   description: string;
   start_date: string;
   end_date: string;
-  evaluation_metric: EvaluationMetric;
+  evaluation_metric: EvaluationMetric | null;
   answer_file_path: string | null;
   // 새 필드
   data_description: string | null;
@@ -60,6 +60,9 @@ export interface Task {
   code_vessl_guide: string | null;
   is_published: boolean;
   max_submissions_per_day: number;
+  // 커스텀 채점
+  use_custom_scoring: boolean;
+  custom_scoring_code: string | null;
   // 메타
   created_by: string;
   created_at: string;

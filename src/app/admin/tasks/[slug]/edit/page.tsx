@@ -27,6 +27,10 @@ export default function EditTaskPage({ params }: Props) {
   const [answerFile, setAnswerFile] = useState<File | null>(null);
   const [hasAnswerFile, setHasAnswerFile] = useState(false);
 
+  // 커스텀 채점
+  const [useCustomScoring, setUseCustomScoring] = useState(false);
+  const [customScoringCode, setCustomScoringCode] = useState('');
+
   // 새 필드들
   const [dataDescription, setDataDescription] = useState('');
   const [dataDownloadUrl, setDataDownloadUrl] = useState('');
@@ -51,10 +55,12 @@ export default function EditTaskPage({ params }: Props) {
         setDescription(task.description || '');
         setStartDate(task.start_date.slice(0, 16));
         setEndDate(task.end_date.slice(0, 16));
-        setMetric(task.evaluation_metric);
+        setMetric(task.evaluation_metric || 'rmse');
         setIsPublished(task.is_published);
         setMaxSubmissions(task.max_submissions_per_day || 5);
         setHasAnswerFile(!!task.answer_file_path);
+        setUseCustomScoring(task.use_custom_scoring || false);
+        setCustomScoringCode(task.custom_scoring_code || '');
         setDataDescription(task.data_description || '');
         setDataDownloadUrl(task.data_download_url || '');
         setCodeDescription(task.code_description || '');
@@ -87,9 +93,11 @@ export default function EditTaskPage({ params }: Props) {
           description,
           start_date: new Date(startDate).toISOString(),
           end_date: new Date(endDate).toISOString(),
-          evaluation_metric: metric,
+          evaluation_metric: useCustomScoring ? null : metric,
           is_published: isPublished,
           max_submissions_per_day: maxSubmissions,
+          use_custom_scoring: useCustomScoring,
+          custom_scoring_code: useCustomScoring ? customScoringCode : null,
           data_description: dataDescription || null,
           data_download_url: dataDownloadUrl || null,
           code_description: codeDescription || null,
@@ -209,39 +217,104 @@ export default function EditTaskPage({ params }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="metric" className="block text-sm font-medium text-gray-700">
-                평가 지표 *
+          {/* 채점 방식 선택 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              채점 방식 *
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="scoringType"
+                  checked={!useCustomScoring}
+                  onChange={() => setUseCustomScoring(false)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <span className="ml-2 text-sm text-gray-700">기본 지표</span>
               </label>
-              <select
-                id="metric"
-                value={metric}
-                onChange={(e) => setMetric(e.target.value as EvaluationMetric)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="rmse">RMSE (Root Mean Squared Error)</option>
-                <option value="accuracy">Accuracy</option>
-                <option value="f1">F1 Score</option>
-                <option value="auc">AUC (Area Under Curve)</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="maxSubmissions" className="block text-sm font-medium text-gray-700">
-                일일 제출 제한
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="scoringType"
+                  checked={useCustomScoring}
+                  onChange={() => setUseCustomScoring(true)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <span className="ml-2 text-sm text-gray-700">커스텀 함수</span>
               </label>
-              <input
-                type="number"
-                id="maxSubmissions"
-                min="1"
-                max="100"
-                value={maxSubmissions}
-                onChange={(e) => setMaxSubmissions(parseInt(e.target.value) || 5)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
             </div>
           </div>
+
+          {!useCustomScoring ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="metric" className="block text-sm font-medium text-gray-700">
+                  평가 지표 *
+                </label>
+                <select
+                  id="metric"
+                  value={metric}
+                  onChange={(e) => setMetric(e.target.value as EvaluationMetric)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="rmse">RMSE (Root Mean Squared Error)</option>
+                  <option value="accuracy">Accuracy</option>
+                  <option value="f1">F1 Score</option>
+                  <option value="auc">AUC (Area Under Curve)</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="maxSubmissions" className="block text-sm font-medium text-gray-700">
+                  일일 제출 제한
+                </label>
+                <input
+                  type="number"
+                  id="maxSubmissions"
+                  min="1"
+                  max="100"
+                  value={maxSubmissions}
+                  onChange={(e) => setMaxSubmissions(parseInt(e.target.value) || 5)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="maxSubmissions" className="block text-sm font-medium text-gray-700">
+                  일일 제출 제한
+                </label>
+                <input
+                  type="number"
+                  id="maxSubmissions"
+                  min="1"
+                  max="100"
+                  value={maxSubmissions}
+                  onChange={(e) => setMaxSubmissions(parseInt(e.target.value) || 5)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="customScoringCode" className="block text-sm font-medium text-gray-700">
+                  채점 함수 (JavaScript)
+                </label>
+                <textarea
+                  id="customScoringCode"
+                  rows={15}
+                  value={customScoringCode}
+                  onChange={(e) => setCustomScoringCode(e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                  placeholder="function score(answer, submission) { ... }"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  answer와 submission은 CSV를 파싱한 객체 배열입니다. 점수(숫자)를 반환하세요.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center">
             <input

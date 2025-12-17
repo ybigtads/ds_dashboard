@@ -127,7 +127,7 @@ export default function AdminCompetitionsPage() {
                     {formatDate(competition.end_date)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {competition.evaluation_metric.toUpperCase()}
+                    {competition.evaluation_metric?.toUpperCase() || 'CUSTOM'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {competition.answer_file_path ? (

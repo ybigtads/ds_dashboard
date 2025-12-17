@@ -52,7 +52,7 @@ export function CompetitionCard({ competition }: CompetitionCardProps) {
         </div>
         <div>
           <span className="font-medium">Metric:</span>{' '}
-          {metricLabels[competition.evaluation_metric]?.split(' ')[0] || competition.evaluation_metric}
+          {competition.evaluation_metric ? (metricLabels[competition.evaluation_metric]?.split(' ')[0] || competition.evaluation_metric) : 'Custom'}
         </div>
       </div>
     </Link>

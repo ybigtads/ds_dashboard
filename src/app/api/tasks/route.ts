@@ -96,11 +96,28 @@ export async function POST(request: NextRequest) {
       code_vessl_guide,
       is_published,
       max_submissions_per_day,
+      use_custom_scoring,
+      custom_scoring_code,
     } = body;
 
-    if (!title || !start_date || !end_date || !evaluation_metric) {
+    // 커스텀 채점이 아닌 경우 evaluation_metric 필수
+    if (!title || !start_date || !end_date) {
       return NextResponse.json(
-        { error: 'Missing required fields: title, start_date, end_date, evaluation_metric' },
+        { error: 'Missing required fields: title, start_date, end_date' },
+        { status: 400 }
+      );
+    }
+
+    if (!use_custom_scoring && !evaluation_metric) {
+      return NextResponse.json(
+        { error: 'evaluation_metric is required when not using custom scoring' },
+        { status: 400 }
+      );
+    }
+
+    if (use_custom_scoring && !custom_scoring_code) {
+      return NextResponse.json(
+        { error: 'custom_scoring_code is required when using custom scoring' },
         { status: 400 }
       );
     }
@@ -134,7 +151,7 @@ export async function POST(request: NextRequest) {
       description: description || '',
       start_date,
       end_date,
-      evaluation_metric,
+      evaluation_metric: use_custom_scoring ? null : evaluation_metric,
       data_description: data_description || null,
       data_files: data_files || [],
       data_download_url: data_download_url || null,
@@ -143,6 +160,8 @@ export async function POST(request: NextRequest) {
       code_vessl_guide: code_vessl_guide || null,
       is_published: is_published ?? true,
       max_submissions_per_day: max_submissions_per_day ?? 5,
+      use_custom_scoring: use_custom_scoring ?? false,
+      custom_scoring_code: use_custom_scoring ? custom_scoring_code : null,
       created_by: session.id,
     };
 

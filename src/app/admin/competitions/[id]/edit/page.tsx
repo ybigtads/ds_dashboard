@@ -42,7 +42,7 @@ export default function EditCompetitionPage({ params }: Props) {
         setDescription(comp.description || '');
         setStartDate(comp.start_date.slice(0, 16));
         setEndDate(comp.end_date.slice(0, 16));
-        setMetric(comp.evaluation_metric);
+        setMetric(comp.evaluation_metric || 'rmse');
         setHasAnswerFile(!!comp.answer_file_path);
       } catch (error) {
         console.error('Error fetching competition:', error);

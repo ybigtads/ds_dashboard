@@ -150,7 +150,7 @@ export default function AdminTasksPage() {
                     <div className="text-gray-400">~ {formatDate(task.end_date)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {task.evaluation_metric.toUpperCase()}
+                    {task.evaluation_metric?.toUpperCase() || '커스텀'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {task.is_published ? (
