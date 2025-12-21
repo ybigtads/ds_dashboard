@@ -3,12 +3,13 @@
 import { useEffect, useState, use } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Task, LeaderboardEntry } from '@/types';
-import { formatDate, metricLabels, getTaskStatus, statusLabels, statusColors } from '@/lib/utils';
+import { formatDate, metricLabels, getTaskStatus, statusLabels } from '@/lib/utils';
 import { useAuth } from '@/components/AuthProvider';
 import { Leaderboard } from '@/components/Leaderboard';
 import { SubmissionForm } from '@/components/SubmissionForm';
 import { BoardTab } from '@/components/board/BoardTab';
 import { QuestionsTab } from '@/components/questions/QuestionsTab';
+import { TaskHeader } from '@/components/tasks/TaskHeader';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -65,6 +66,14 @@ export default function TaskDetailPage({ params }: Props) {
     router.push(`/tasks/${slug}?tab=${tab}`);
   };
 
+  const handleSubmitClick = () => {
+    if (user) {
+      handleTabChange('submit');
+    } else {
+      router.push('/login');
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -90,52 +99,28 @@ export default function TaskDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-start mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">{task.title}</h1>
-            <span className={`px-3 py-1 text-sm font-medium rounded-full ${statusColors[status]}`}>
-              {statusLabels[status]}
-            </span>
-          </div>
+      {/* Dacon 스타일 헤더 */}
+      <TaskHeader
+        task={task}
+        status={status}
+        participantCount={leaderboard.length}
+        canSubmit={!!canSubmit}
+        onSubmitClick={handleSubmitClick}
+      />
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>
-              <span className="text-gray-500">시작일</span>
-              <p className="font-medium">{formatDate(task.start_date)}</p>
-            </div>
-            <div>
-              <span className="text-gray-500">종료일</span>
-              <p className="font-medium">{formatDate(task.end_date)}</p>
-            </div>
-            <div>
-              <span className="text-gray-500">평가 지표</span>
-              <p className="font-medium">{task.evaluation_metric ? metricLabels[task.evaluation_metric] : '커스텀'}</p>
-            </div>
-            <div>
-              <span className="text-gray-500">참가자</span>
-              <p className="font-medium">{leaderboard.length}명</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
+      {/* 탭 + 콘텐츠 영역 */}
+      <div className="bg-white rounded-lg shadow-lg mt-4 overflow-hidden">
+        {/* Dacon 스타일 탭 */}
         <div className="border-b border-gray-200 overflow-x-auto">
-          <nav className="flex -mb-px">
+          <nav className="flex">
             {TAB_CONFIG.map(({ key, label, requiresAuth }) => {
-              // 인증이 필요한 탭은 로그인하지 않은 사용자에게 숨김
               if (requiresAuth && !user) return null;
 
               return (
                 <button
                   key={key}
                   onClick={() => handleTabChange(key)}
-                  className={`px-4 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                    currentTab === key
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                  className={`dacon-tab ${currentTab === key ? 'dacon-tab-active' : ''}`}
                 >
                   {label}
                 </button>

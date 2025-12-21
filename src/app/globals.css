@@ -3,10 +3,74 @@
 :root {
   --background: #f9fafb;
   --foreground: #171717;
+
+  /* Dacon 테마 색상 */
+  --dacon-navy: #002648;
+  --dacon-navy-light: #003a6b;
+  --dacon-navy-dark: #001830;
+  --dacon-accent: #00a8e8;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Dacon 스타일 진행 바 */
+.dacon-progress-bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dacon-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--dacon-accent) 0%, var(--dacon-navy) 100%);
+  border-radius: 4px;
+  transition: width 0.5s ease-in-out;
+}
+
+/* Dacon 스타일 버튼 */
+.dacon-btn-primary {
+  background-color: var(--dacon-navy);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dacon-btn-primary:hover {
+  background-color: var(--dacon-navy-light);
+}
+
+.dacon-btn-primary:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Dacon 스타일 탭 */
+.dacon-tab {
+  padding: 1rem 1.25rem;
+  font-weight: 500;
+  color: #6b7280;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.dacon-tab:hover {
+  color: var(--dacon-navy);
+}
+
+.dacon-tab-active {
+  color: var(--dacon-navy);
+  border-bottom-color: var(--dacon-navy);
+  font-weight: 600;
 }

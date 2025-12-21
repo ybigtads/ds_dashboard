@@ -94,3 +94,42 @@ export const statusColors: Record<string, string> = {
   active: 'bg-green-100 text-green-800',
   ended: 'bg-gray-100 text-gray-800',
 };
+
+// Dacon 스타일 상태 색상
+export const daconStatusColors: Record<string, string> = {
+  upcoming: 'bg-amber-500 text-white',
+  active: 'bg-[#002648] text-white',
+  ended: 'bg-gray-400 text-white',
+};
+
+/**
+ * 과제 진행률 계산 (0-100)
+ */
+export function calculateProgress(startDate: string, endDate: string): number {
+  const now = new Date().getTime();
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+
+  if (now < start) return 0;
+  if (now > end) return 100;
+
+  const total = end - start;
+  const elapsed = now - start;
+  return Math.round((elapsed / total) * 100);
+}
+
+/**
+ * D-Day 계산 (종료일까지 남은 일수)
+ */
+export function calculateDDay(endDate: string): string {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+  const diffMs = end.getTime() - now.getTime();
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return '종료';
+  if (diffDays === 0) return 'D-Day';
+  return `D-${diffDays}`;
+}
