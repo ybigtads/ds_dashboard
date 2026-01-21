@@ -36,7 +36,9 @@ async function submitCSV() {
 
   // 2. 1기 관리자 조회 (cohort=1, role=admin)
   console.log('2. 1기 관리자 조회...');
-  const { data: user, error: userError } = await supabase
+  let user: { id: string; email: string; name: string | null; username: string; cohort: number; role: string } | null = null;
+
+  const { data: cohortAdmin, error: cohortError } = await supabase
     .from('users')
     .select('id, email, name, username, cohort, role')
     .eq('role', 'admin')
@@ -44,7 +46,7 @@ async function submitCSV() {
     .limit(1)
     .single();
 
-  if (userError || !user) {
+  if (cohortError || !cohortAdmin) {
     // cohort 조건 없이 admin만 조회
     console.log('   1기 admin 없음, admin 계정 조회...');
     const { data: adminUser, error: adminError } = await supabase
@@ -58,10 +60,12 @@ async function submitCSV() {
       console.error('   ❌ admin 계정을 찾을 수 없습니다');
       process.exit(1);
     }
-    Object.assign(user || {}, adminUser);
+    user = adminUser;
+  } else {
+    user = cohortAdmin;
   }
-  console.log(`   ✓ 사용자: ${user!.name || user!.username} (${user!.email})`);
-  console.log(`   - 기수: ${user!.cohort}기, 역할: ${user!.role}\n`);
+  console.log(`   ✓ 사용자: ${user.name || user.username} (${user.email})`);
+  console.log(`   - 기수: ${user.cohort}기, 역할: ${user.role}\n`);
 
   // 3. 과제 조회
   console.log(`3. 과제 조회: ${TASK_SLUG}`);
