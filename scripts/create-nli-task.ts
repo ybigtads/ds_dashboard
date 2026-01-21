@@ -100,7 +100,55 @@ id,label
 
 **Accuracy (정확도)**: 전체에서 맞게 label한 전제-가설 문장 쌍 비율`,
   data_download_url: null,
-  code_description: null,
+  code_description: `## KorNLI Baseline 코드 가이드
+
+한국어 자연어 추론(NLI) 분류 모델 학습 코드입니다.
+
+### 파일 구조
+
+\`\`\`
+baseline/
+├── config.py      # 설정값 (모델명, 하이퍼파라미터)
+├── preprocess.py  # 텍스트 전처리
+├── dataset.py     # 데이터 로딩 & Dataset 클래스
+├── model.py       # 모델/토크나이저 로딩
+├── train.py       # 학습 루프
+├── evaluate.py    # 평가
+├── predict.py     # 추론 & submission 생성
+├── main.py        # CLI 진입점
+└── NLI.ipynb      # 노트북 (Colab용)
+\`\`\`
+
+### 실행 방법
+
+#### CLI
+\`\`\`bash
+python main.py --preset minimal --data_dir ../data-sampled
+\`\`\`
+
+#### Colab 노트북
+1. \`NLI.ipynb\` 파일을 Colab에 업로드
+2. 런타임 > 런타임 유형 변경 > **GPU** 선택
+3. 첫 번째 셀의 주석 해제 후 실행:
+   \`\`\`python
+   !pip install -q torch transformers pandas scikit-learn tqdm sentencepiece
+   \`\`\`
+4. 나머지 셀 순차 실행
+5. 마지막 셀에서 \`submission.csv\` 생성됨
+
+### 설정 변경
+
+\`config.py\`의 프리셋을 사용하거나 직접 오버라이드:
+
+\`\`\`python
+# 노트북에서
+config = get_config("standard", learning_rate=3e-5, epochs=5)
+\`\`\`
+
+| 프리셋 | 특징 |
+|--------|------|
+| minimal | 빠른 테스트용 (3 epochs) |
+| standard | 본격 학습용 (5 epochs, early stopping) |`,
   code_git_url: null,
   code_vessl_guide: null,
   data_files: [],
@@ -118,11 +166,14 @@ async function createNLITask() {
 
   if (existing) {
     console.log(`이미 존재하는 과제입니다: ${existing.slug} (id: ${existing.id})`);
-    console.log('data_description 업데이트 중...');
+    console.log('설명 업데이트 중...');
 
     const { error: updateError } = await supabase
       .from('tasks')
-      .update({ data_description: NLI_TASK.data_description })
+      .update({
+        data_description: NLI_TASK.data_description,
+        code_description: NLI_TASK.code_description,
+      })
       .eq('id', existing.id);
 
     if (updateError) {
@@ -130,7 +181,7 @@ async function createNLITask() {
       process.exit(1);
     }
 
-    console.log('data_description 업데이트 완료!');
+    console.log('설명 업데이트 완료!');
     return;
   }
 
