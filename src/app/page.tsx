@@ -24,17 +24,8 @@ export default function HomePage() {
 
             {/* Main Heading */}
             <h1 className="heading-1 text-4xl sm:text-5xl lg:text-6xl mb-6 animate-slide-up">
-              실력을 증명하고
-              <br />
-              <span className="gradient-text">함께 성장하세요</span>
+              <span className="gradient-text">26-1 YBIGTA 교육세션</span>
             </h1>
-
-            {/* Subheading */}
-            <p className="body-large text-lg sm:text-xl max-w-2xl mx-auto mb-10 animate-slide-up stagger-1">
-              DS Dashboard에서 데이터 과학 과제에 도전하고,
-              <br className="hidden sm:block" />
-              리더보드에서 당신의 실력을 확인하세요.
-            </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up stagger-2">
@@ -53,62 +44,6 @@ export default function HomePage() {
               >
                 시작하기
               </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section Header */}
-          <div className="text-center mb-16">
-            <p className="label mb-3 text-[var(--brand-primary)]">Features</p>
-            <h2 className="heading-2 mb-4">왜 DS Dashboard인가요?</h2>
-            <p className="body-base max-w-xl mx-auto">
-              데이터 과학 실력 향상을 위한 최적의 환경을 제공합니다
-            </p>
-          </div>
-
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {/* Feature 1 */}
-            <div className="card card-accent p-8 animate-fade-in stagger-1">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--brand-primary)]/10 to-[var(--brand-accent)]/10 flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-[var(--brand-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-              </div>
-              <h3 className="heading-3 mb-3">실전 과제</h3>
-              <p className="body-small">
-                실무에서 마주할 수 있는 다양한 데이터 과학 문제를 해결하며 실전 경험을 쌓으세요.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="card card-accent p-8 animate-fade-in stagger-2">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--brand-primary)]/10 to-[var(--brand-accent)]/10 flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-[var(--brand-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                </svg>
-              </div>
-              <h3 className="heading-3 mb-3">즉시 피드백</h3>
-              <p className="body-small">
-                제출 즉시 점수를 확인하고, 리더보드에서 다른 참가자들과 비교해보세요.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="card card-accent p-8 animate-fade-in stagger-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--brand-primary)]/10 to-[var(--brand-accent)]/10 flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-[var(--brand-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <h3 className="heading-3 mb-3">커뮤니티</h3>
-              <p className="body-small">
-                질문하고, 토론하고, 함께 배우세요. 혼자가 아닌 팀으로 성장합니다.
-              </p>
             </div>
           </div>
         </div>
@@ -163,45 +98,6 @@ export default function HomePage() {
               <p className="body-small">
                 예측 결과를 CSV로 제출하고 즉시 점수와 순위를 확인하세요.
               </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-dark)] p-10 lg:p-16 text-center">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute inset-0" style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-              }} />
-            </div>
-
-            <div className="relative">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-                지금 바로 시작하세요
-              </h2>
-              <p className="text-lg text-white/80 max-w-xl mx-auto mb-8">
-                무료로 가입하고 첫 번째 과제에 도전해보세요.
-                <br />
-                당신의 데이터 과학 여정이 시작됩니다.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link
-                  href="/register"
-                  className="btn btn-lg bg-white text-[var(--brand-primary)] hover:bg-white/90 w-full sm:w-auto"
-                >
-                  무료로 시작하기
-                </Link>
-                <Link
-                  href="/tasks"
-                  className="btn btn-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 w-full sm:w-auto"
-                >
-                  과제 둘러보기
-                </Link>
-              </div>
             </div>
           </div>
         </div>
