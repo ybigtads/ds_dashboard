@@ -47,9 +47,9 @@ async function uploadAnswerFile() {
   }
 
   const header = lines[0].trim();
-  if (header !== 'id,label' && header !== 'id,prediction') {
+  if (header !== 'id,label') {
     console.error(`   ❌ 잘못된 헤더 형식: "${header}"`);
-    console.error('   예상 형식: "id,label" 또는 "id,prediction"');
+    console.error('   예상 형식: "id,label"');
     process.exit(1);
   }
   console.log(`   ✓ 헤더 확인: ${header}`);

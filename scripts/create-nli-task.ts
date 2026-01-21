@@ -43,7 +43,7 @@ id,label
 
 ## 평가 지표
 **Accuracy** - 정확히 맞춘 예측의 비율`,
-  start_date: '2026-01-23T22:00:00+09:00',
+  start_date: '2026-01-22T00:00:00+09:00',
   end_date: '2026-01-29T23:59:00+09:00',
   evaluation_metric: 'accuracy',
   is_published: true,
@@ -171,6 +171,7 @@ async function createNLITask() {
     const { error: updateError } = await supabase
       .from('tasks')
       .update({
+        start_date: NLI_TASK.start_date,
         data_description: NLI_TASK.data_description,
         code_description: NLI_TASK.code_description,
       })
