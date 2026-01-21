@@ -7,16 +7,25 @@ import { Header } from "@/components/Header";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "DS Dashboard - Kaggle-style Leaderboard",
-  description: "Data Science Competition Dashboard",
+  title: "DS Dashboard - Data Science Competition Platform",
+  description: "Kaggle-style data science competition platform. Challenge yourself, submit predictions, and track your progress on the leaderboard.",
+  keywords: ["data science", "machine learning", "competition", "leaderboard", "kaggle"],
+  authors: [{ name: "DS Dashboard Team" }],
+  openGraph: {
+    title: "DS Dashboard - Data Science Competition Platform",
+    description: "Challenge yourself with data science competitions and track your progress.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -25,13 +34,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko" className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        style={{
+          background: "var(--background)",
+          color: "var(--text-primary)",
+        }}
       >
         <AuthProvider>
-          <Header />
-          <main className="min-h-screen">{children}</main>
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1">{children}</main>
+          </div>
         </AuthProvider>
       </body>
     </html>
