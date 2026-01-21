@@ -10,6 +10,7 @@ import { SubmissionForm } from '@/components/SubmissionForm';
 import { BoardTab } from '@/components/board/BoardTab';
 import { QuestionsTab } from '@/components/questions/QuestionsTab';
 import { TaskHeader } from '@/components/tasks/TaskHeader';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -187,11 +188,11 @@ function OverviewTab({ task }: { task: Task }) {
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">과제 설명</h2>
-      <div className="prose max-w-none">
-        <p className="text-gray-600 whitespace-pre-wrap">
-          {task.description || '설명이 없습니다.'}
-        </p>
-      </div>
+      {task.description ? (
+        <MarkdownRenderer content={task.description} />
+      ) : (
+        <p className="text-gray-500">설명이 없습니다.</p>
+      )}
     </div>
   );
 }
@@ -203,9 +204,7 @@ function DataTab({ task }: { task: Task }) {
       <div>
         <h2 className="text-xl font-semibold mb-4">데이터 설명</h2>
         {task.data_description ? (
-          <div className="prose max-w-none">
-            <p className="text-gray-600 whitespace-pre-wrap">{task.data_description}</p>
-          </div>
+          <MarkdownRenderer content={task.data_description} />
         ) : (
           <p className="text-gray-500">데이터 설명이 없습니다.</p>
         )}
@@ -269,9 +268,7 @@ function CodeTab({ task }: { task: Task }) {
       <div>
         <h2 className="text-xl font-semibold mb-4">코드 가이드</h2>
         {task.code_description ? (
-          <div className="prose max-w-none">
-            <p className="text-gray-600 whitespace-pre-wrap">{task.code_description}</p>
-          </div>
+          <MarkdownRenderer content={task.code_description} />
         ) : (
           <p className="text-gray-500">코드 설명이 없습니다.</p>
         )}
@@ -302,8 +299,8 @@ function CodeTab({ task }: { task: Task }) {
       {task.code_vessl_guide && (
         <div>
           <h3 className="text-lg font-semibold mb-3">VESSL GPU 가이드</h3>
-          <div className="prose max-w-none bg-blue-50 rounded-lg p-4">
-            <p className="text-gray-700 whitespace-pre-wrap">{task.code_vessl_guide}</p>
+          <div className="bg-blue-50 rounded-lg p-4">
+            <MarkdownRenderer content={task.code_vessl_guide} />
           </div>
         </div>
       )}

@@ -809,3 +809,378 @@ body {
 .container-md { max-width: 768px; }
 .container-lg { max-width: 1024px; }
 .container-xl { max-width: 1280px; }
+
+/* --------------------------------------------
+   15. Markdown Typography
+   -------------------------------------------- */
+.markdown-content {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+
+/* Headings */
+.md-h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.md-h2 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  padding-left: 0.875rem;
+  position: relative;
+}
+
+.md-h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.15em;
+  bottom: 0.15em;
+  width: 4px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+}
+
+.md-h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.md-h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+/* First heading in content - no top margin */
+.markdown-content > .md-h1:first-child,
+.markdown-content > .md-h2:first-child,
+.markdown-content > .md-h3:first-child,
+.markdown-content > .md-h4:first-child {
+  margin-top: 0;
+}
+
+/* Paragraph */
+.md-p {
+  margin-bottom: 1rem;
+}
+
+.md-p:last-child {
+  margin-bottom: 0;
+}
+
+/* Strong & Emphasis */
+.md-strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.md-em {
+  font-style: italic;
+}
+
+/* Lists */
+.md-ul,
+.md-ol {
+  margin-bottom: 1rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.md-ol {
+  counter-reset: md-counter;
+}
+
+.md-li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.md-ul > .md-li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+}
+
+.md-ol > .md-li {
+  counter-increment: md-counter;
+}
+
+.md-ol > .md-li::before {
+  content: counter(md-counter) '.';
+  position: absolute;
+  left: 0;
+  font-weight: 600;
+  color: var(--brand-primary);
+}
+
+/* Nested lists */
+.md-li > .md-ul,
+.md-li > .md-ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* Inline Code */
+.md-code-inline {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.875em;
+  padding: 0.2em 0.4em;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%);
+  border: 1px solid rgba(30, 64, 175, 0.15);
+  color: var(--brand-primary-dark);
+}
+
+/* Code Block */
+.md-pre {
+  position: relative;
+  margin: 1.5rem 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.md-pre::before {
+  content: '';
+  display: block;
+  height: 32px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  position: relative;
+}
+
+.md-pre::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 20px 0 0 #fbbf24, 40px 0 0 #22c55e;
+}
+
+.md-code-block {
+  display: block;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  padding: 1rem 1.25rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  overflow-x: auto;
+}
+
+/* Blockquote */
+.md-blockquote {
+  position: relative;
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+  border-left: 4px solid var(--brand-primary);
+}
+
+.md-blockquote .md-p {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.md-blockquote .md-p:last-child {
+  margin-bottom: 0;
+}
+
+/* Table */
+.md-table-wrapper {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.md-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.md-thead {
+  background: var(--background-subtle);
+}
+
+.md-th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border);
+}
+
+.md-td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.md-tr:last-child .md-td {
+  border-bottom: none;
+}
+
+.md-tbody .md-tr:hover {
+  background: var(--background-subtle);
+}
+
+/* Link */
+.md-a {
+  color: var(--brand-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.md-a:hover {
+  color: var(--brand-primary-light);
+  text-decoration: underline;
+}
+
+/* Image */
+.md-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  margin: 1rem 0;
+  box-shadow: var(--shadow-md);
+}
+
+/* Horizontal Rule */
+.md-hr {
+  margin: 2rem 0;
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, var(--border) 0%, var(--border-subtle) 50%, var(--border) 100%);
+  border-radius: 1px;
+}
+
+/* --------------------------------------------
+   16. Syntax Highlighting Theme (Brand Colors)
+   -------------------------------------------- */
+/* Base */
+.hljs {
+  background: #0f172a !important;
+  color: #e2e8f0;
+}
+
+/* Keywords */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-name {
+  color: #f472b6;
+}
+
+/* Strings */
+.hljs-string,
+.hljs-attr,
+.hljs-symbol,
+.hljs-bullet {
+  color: #34d399;
+}
+
+/* Functions */
+.hljs-title,
+.hljs-section {
+  color: #60a5fa;
+}
+
+/* Variables & Numbers */
+.hljs-variable,
+.hljs-number,
+.hljs-link {
+  color: #fbbf24;
+}
+
+/* Types & Classes */
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #22d3ee;
+}
+
+/* Comments */
+.hljs-comment,
+.hljs-quote {
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Attributes */
+.hljs-attribute,
+.hljs-params {
+  color: #fb923c;
+}
+
+/* Tags */
+.hljs-tag {
+  color: #94a3b8;
+}
+
+.hljs-tag .hljs-name {
+  color: #f472b6;
+}
+
+.hljs-tag .hljs-attr {
+  color: #60a5fa;
+}
+
+/* Operators & Punctuation */
+.hljs-operator,
+.hljs-punctuation {
+  color: #94a3b8;
+}
+
+/* Regex */
+.hljs-regexp {
+  color: #f472b6;
+}
+
+/* Meta */
+.hljs-meta {
+  color: #64748b;
+}
+
+/* Deletion & Addition (Diff) */
+.hljs-deletion {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.hljs-addition {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
