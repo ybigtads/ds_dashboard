@@ -38,3 +38,7 @@ next-env.d.ts
 # IDE
 .idea
 .vscode
+
+# Answer files (prevent leaking test answers)
+*_answer.csv
+*answer*.csv

@@ -50,7 +50,55 @@ id,label
   max_submissions_per_day: 10,
   use_custom_scoring: false,
   custom_scoring_code: null,
-  data_description: null,
+  data_description: `## 개요
+
+두 문장 간의 의미 관계를 추론하는 자연어 이해 태스크입니다. 전제(premise)와 가설(hypothesis) 문장이 주어지면, 두 문장의 관계를 함의(entailment), 중립(neutral), 모순(contradiction) 중 하나로 분류합니다.
+
+## 데이터 구성
+
+| 파일명 | 설명 | 행 수 |
+|--------|------|-------|
+| train.tsv | 학습 데이터 | 942,854 |
+| val.tsv | 검증 데이터 | 2,490 |
+| test.tsv | 평가 데이터 (라벨 미포함) | 5,010 |
+
+## 컬럼 정보
+
+### 학습/검증 데이터 (train.tsv, val.tsv)
+
+| 컬럼명 | 설명 |
+|--------|------|
+| sentence1 | 전제 문장 (premise) |
+| sentence2 | 가설 문장 (hypothesis) |
+| gold_label | 레이블 (entailment / neutral / contradiction) |
+
+### 평가 데이터 (test.tsv)
+
+| 컬럼명 | 설명 |
+|--------|------|
+| id | 고유 식별자 (0~5009) |
+| sentence1 | 전제 문장 (premise) |
+| sentence2 | 가설 문장 (hypothesis) |
+
+## 레이블 설명
+
+- **entailment**: 전제가 참일 때 가설도 참 (함의)
+- **neutral**: 전제만으로 가설의 참/거짓 판단 불가 (중립)
+- **contradiction**: 전제가 참일 때 가설은 거짓 (모순)
+
+## 제출 형식
+
+\`\`\`csv
+id,label
+0,contradiction
+1,entailment
+2,neutral
+...
+\`\`\`
+
+## 평가 지표
+
+**Accuracy (정확도)**: 전체에서 맞게 label한 전제-가설 문장 쌍 비율`,
   data_download_url: null,
   code_description: null,
   code_git_url: null,
@@ -70,6 +118,19 @@ async function createNLITask() {
 
   if (existing) {
     console.log(`이미 존재하는 과제입니다: ${existing.slug} (id: ${existing.id})`);
+    console.log('data_description 업데이트 중...');
+
+    const { error: updateError } = await supabase
+      .from('tasks')
+      .update({ data_description: NLI_TASK.data_description })
+      .eq('id', existing.id);
+
+    if (updateError) {
+      console.error('업데이트 실패:', updateError);
+      process.exit(1);
+    }
+
+    console.log('data_description 업데이트 완료!');
     return;
   }
 
