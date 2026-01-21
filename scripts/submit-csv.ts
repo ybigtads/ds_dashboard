@@ -64,6 +64,12 @@ async function submitCSV() {
   } else {
     user = cohortAdmin;
   }
+
+  if (!user) {
+    console.error('   ❌ 사용자를 찾을 수 없습니다');
+    process.exit(1);
+  }
+
   console.log(`   ✓ 사용자: ${user.name || user.username} (${user.email})`);
   console.log(`   - 기수: ${user.cohort}기, 역할: ${user.role}\n`);
 
