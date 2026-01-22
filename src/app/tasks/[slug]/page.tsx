@@ -7,6 +7,7 @@ import { formatDate, metricLabels, getTaskStatus, statusLabels } from '@/lib/uti
 import { useAuth } from '@/components/AuthProvider';
 import { Leaderboard } from '@/components/Leaderboard';
 import { SubmissionForm } from '@/components/SubmissionForm';
+import { SubmissionList } from '@/components/SubmissionList';
 import { BoardTab } from '@/components/board/BoardTab';
 import { QuestionsTab } from '@/components/questions/QuestionsTab';
 import { TaskHeader } from '@/components/tasks/TaskHeader';
@@ -37,6 +38,7 @@ export default function TaskDetailPage({ params }: Props) {
   const [task, setTask] = useState<Task | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submissionRefreshTrigger, setSubmissionRefreshTrigger] = useState(0);
 
   const currentTab = (searchParams.get('tab') as TabType) || 'overview';
 
@@ -161,10 +163,23 @@ export default function TaskDetailPage({ params }: Props) {
 
           {currentTab === 'submit' && (
             canSubmit ? (
-              <SubmissionForm
-                taskSlug={slug}
-                onSuccess={fetchData}
-              />
+              <div className="space-y-8">
+                <SubmissionForm
+                  taskSlug={slug}
+                  onSuccess={() => {
+                    fetchData();
+                    setSubmissionRefreshTrigger(prev => prev + 1);
+                  }}
+                />
+                <div className="border-t pt-8">
+                  <h2 className="text-xl font-semibold mb-4">제출 이력</h2>
+                  <SubmissionList
+                    taskSlug={slug}
+                    metric={task.evaluation_metric}
+                    refreshTrigger={submissionRefreshTrigger}
+                  />
+                </div>
+              </div>
             ) : (
               <div className="text-center py-8">
                 {!user ? (

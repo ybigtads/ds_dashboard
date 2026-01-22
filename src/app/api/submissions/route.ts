@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const taskId = searchParams.get('task_id');
+    const taskSlug = searchParams.get('task_slug');
 
     let query = supabaseAdmin
       .from('submissions')
@@ -23,7 +24,18 @@ export async function GET(request: NextRequest) {
       .eq('user_id', session.id)
       .order('submitted_at', { ascending: false });
 
-    if (taskId) {
+    // task_slug로 필터링 (task_id보다 우선)
+    if (taskSlug) {
+      const { data: task } = await supabaseAdmin
+        .from('tasks')
+        .select('id')
+        .eq('slug', taskSlug)
+        .single();
+
+      if (task) {
+        query = query.eq('task_id', task.id);
+      }
+    } else if (taskId) {
       query = query.eq('task_id', taskId);
     }
 
