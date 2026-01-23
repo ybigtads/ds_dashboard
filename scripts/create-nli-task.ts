@@ -108,26 +108,27 @@ id,label
 
 \`\`\`
 baseline/
-├── config.py      # 설정값 (모델명, 하이퍼파라미터)
-├── preprocess.py  # 텍스트 전처리
-├── dataset.py     # 데이터 로딩 & Dataset 클래스
-├── model.py       # 모델/토크나이저 로딩
-├── train.py       # 학습 루프
-├── evaluate.py    # 평가
-├── predict.py     # 추론 & submission 생성
-├── main.py        # CLI 진입점
-└── NLI.ipynb      # 노트북 (Colab용)
+├── config.py       # 학습 설정 (에폭, 배치 크기, 학습률 등)
+├── dataset.py      # 데이터셋 로딩 및 DataLoader 생성
+├── evaluate.py     # 모델 평가 (검증 데이터)
+├── main.py         # 메인 실행 파일 (학습 + 추론 파이프라인)
+├── model.py        # 모델 정의 (사전학습 모델 로드)
+├── predict.py      # 테스트 데이터 추론 및 submission.csv 생성
+├── preprocess.py   # 텍스트 전처리
+├── train.py        # 학습 루프
+└── baseline.ipynb  # Colab 실행용 노트북
 \`\`\`
 
 ### 실행 방법
 
 #### CLI
 \`\`\`bash
-python main.py --preset minimal --data_dir ../data-sampled
+cd baseline
+python main.py
 \`\`\`
 
 #### Colab 노트북
-1. \`NLI.ipynb\` 파일을 Colab에 업로드
+1. \`baseline.ipynb\` 파일을 Colab에 업로드
 2. 런타임 > 런타임 유형 변경 > **GPU** 선택
 3. 첫 번째 셀의 주석 해제 후 실행:
    \`\`\`python
