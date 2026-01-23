@@ -44,7 +44,7 @@ function LoginForm() {
           Sign in to your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Use your Google or GitHub account to continue
+          Use your Google account to continue
         </p>
       </div>
 
@@ -84,11 +84,11 @@ function LoginForm() {
           </span>
         </button>
 
-        {/* GitHub 로그인 버튼 */}
+        {/* GitHub 로그인 버튼 - 비활성화됨 */}
         <button
           onClick={handleGitHubLogin}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="hidden w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <svg className="w-5 h-5" fill="white" viewBox="0 0 24 24">
             <path
